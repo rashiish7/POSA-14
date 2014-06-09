@@ -1,8 +1,8 @@
 package edu.vuum.mocca;
 
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @class SimpleSemaphore
@@ -20,6 +20,9 @@ public class SimpleSemaphore {
                             boolean fair)
     { 
         // TODO - you fill in here
+        count = permits;
+        lock = new ReentrantLock(fair);
+        condition = lock.newCondition();
     }
 
     /**
@@ -28,6 +31,15 @@ public class SimpleSemaphore {
      */
     public void acquire() throws InterruptedException {
         // TODO - you fill in here
+        lock.lock();
+        try {
+            while (count == 0)
+                condition.await();
+
+            --count;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -36,6 +48,16 @@ public class SimpleSemaphore {
      */
     public void acquireUninterruptibly() {
         // TODO - you fill in here
+
+        lock.lock();
+        try {
+            while (count == 0)
+                condition.awaitUninterruptibly();
+
+            --count;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
@@ -43,6 +65,15 @@ public class SimpleSemaphore {
      */
     void release() {
         // TODO - you fill in here
+        lock.lock();
+        try {
+            ++count;
+            // release the waiting thread one at a time
+            condition.signal();
+        } finally {
+            lock.unlock();
+        }
+
     }
     
     /**
@@ -50,24 +81,27 @@ public class SimpleSemaphore {
      */
     public int availablePermits(){
     	// TODO - you fill in here
-    	return 0; // You will change this value. 
+    	return count; // You will change this value.
     }
     
     /**
      * Define a ReentrantLock to protect the critical section.
      */
     // TODO - you fill in here
+    private Lock lock;
 
     /**
      * Define a ConditionObject to wait while the number of
      * permits is 0.
      */
     // TODO - you fill in here
+    private Condition condition;
 
     /**
      * Define a count of the number of available permits.
      */
     // TODO - you fill in here.  Make sure that this data member will
     // ensure its values aren't cached by multiple Threads..
+    private volatile int count;
 }
 
